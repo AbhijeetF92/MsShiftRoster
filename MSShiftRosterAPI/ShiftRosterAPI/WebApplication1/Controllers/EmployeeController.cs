@@ -10,21 +10,21 @@ namespace WebRosterAPI.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        //public  CosmosClient _cosmosClient;
-        //public  string _databaseName = "YourDatabaseName";
-        //public  string _containerName = "YourContainerName";
+        public CosmosClient _cosmosClient;
+        public string _databaseName = "msshiftrosterdb";
+        public string _containerName = "EmployeeDetails";
 
-        //public EmployeeController(CosmosClient cosmosClient)
-        //{
-        //    _cosmosClient = cosmosClient;
-        //}
+        public EmployeeController(CosmosClient cosmosClient)
+        {
+            _cosmosClient = cosmosClient;
+        }
         [HttpGet("fortnight")]
         public IActionResult GetFortnightDate()
         {
             
-            MonthDate emp1 = new MonthDate() { name = "Abhijeet" };
-            MonthDate emp2 = new MonthDate() { name = "Anish" };
-            MonthDate emp3 = new MonthDate() { name = "Yogesh" };
+            MonthDate emp1 = new MonthDate() { employeeID = "abhijeet.a.fegade@accenure.com" };
+            MonthDate emp2 = new MonthDate() { employeeID = "yogeshkumar.salunkhe@accenture.com" };
+            MonthDate emp3 = new MonthDate() { employeeID = "anish.m.pillay@accenture.com" };
 
             List<MonthDate> emp = new List<MonthDate>();
 
@@ -43,20 +43,14 @@ namespace WebRosterAPI.Controllers
             {
 
                 // Connect to the database and container
-                //var database = _cosmosClient.GetDatabase("");
-                //var container = database.GetContainer("");
-                foreach (var _mondate in empdata)
-                {
-                    string name = _mondate.name;
-                    string selectedLetter = _mondate.selectedLetter;
-                    string formattedDate = _mondate.formattedDate;
-                }
-
-                
-
-
+                var database = _cosmosClient.GetDatabase("msshiftrosterdb");
+                var container = database.GetContainer("EmployeeDetails");
                 // Insert the data into Cosmos DB
-               // var response = _mondate;//await container.CreateItemAsync(empdata);
+                foreach (var item in empdata)
+                {
+                    item.id = Guid.NewGuid().ToString();
+                    await container.CreateItemAsync(item);
+                }
 
                 return Ok();
             }
