@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebRosterAPI.Models;
 using Microsoft.Azure.Cosmos;
 using System.Reflection;
+using System.ComponentModel;
 
 namespace WebRosterAPI.Controllers
 {
@@ -19,25 +20,33 @@ namespace WebRosterAPI.Controllers
             _cosmosClient = cosmosClient;
         }
         [HttpGet("fortnight")]
-        public IActionResult GetFortnightDate()
+        public async Task<IActionResult> GetFortnightDate()
         {
-            
-            MonthDate emp1 = new MonthDate() { employeeID = "abhijeet.a.fegade@accenure.com" };
-            MonthDate emp2 = new MonthDate() { employeeID = "yogeshkumar.salunkhe@accenture.com" };
-            MonthDate emp3 = new MonthDate() { employeeID = "anish.m.pillay@accenture.com" };
 
-            List<MonthDate> emp = new List<MonthDate>();
+           
+            var database = _cosmosClient.GetDatabase("msshiftrosterdb");
+            var container = database.GetContainer("monthlyshiftdetails");
 
-            emp.Add(emp1);
-            emp.Add(emp2);
-            emp.Add(emp3);
+            var monthlyShifts = new List<MonthlyShift>();
 
+            string sqlQueryText = "SELECT * FROM c";
 
-            return Ok(emp);
+            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
+
+            var resultSetIterator = container.GetItemQueryIterator<MonthlyShift>(
+                queryDefinition: queryDefinition);
+
+            while (resultSetIterator.HasMoreResults)
+            {
+                var response = await resultSetIterator.ReadNextAsync();
+                monthlyShifts.AddRange(response);
+            }
+
+            return Ok(monthlyShifts);
         }
        
         [HttpPost("AddEmployee")]
-        public async Task< IActionResult> UpdateEmployeeData([FromBody] List<MonthDate> empdata)
+        public async Task< IActionResult> UpdateEmployeeData([FromBody] List<MonthlyShift> shiftdata)
         {
             try
             {
@@ -46,9 +55,9 @@ namespace WebRosterAPI.Controllers
                 var database = _cosmosClient.GetDatabase("msshiftrosterdb");
                 var container = database.GetContainer("EmployeeDetails");
                 // Insert the data into Cosmos DB
-                foreach (var item in empdata)
+                foreach (var item in shiftdata)
                 {
-                    item.id = Guid.NewGuid().ToString();
+                    //item.id = Guid.NewGuid().ToString();
                     await container.CreateItemAsync(item);
                 }
 
